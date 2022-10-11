@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  web_api:
+    build:
+      context: ../project/
+      dockerfile: ../docker/Dockerfile
+    command: poetry run uvicorn api.main:app --reload --workers 1 --host 0.0.0.0 --port 80
+    ports:
+        - 8000:80
+    volumes:
+      - ../project:/home/project
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: ../project/
+      dockerfile: ../docker/Dockerfile
+    command: poetry run celery -A worker.worker.celery worker --loglevel=info --logfile=logs/celery.log
+    volumes:
+      - ../project:/home/project
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web_api
+      - redis
+
+  redis:
+    image: redis:7-alpine
+
+  # dashboard:
+  #   build:
+  #     context: ../project/
+  #     dockerfile: ../docker/Dockerfile
+  #   command: poetry run celery --app=worker.celery --broker=redis://redis:6379/0 flower --port=5555
+  #   volumes:
+  #     - ../project:/home/project
+  #   ports:
+  #     - 5556:5555
+  #   environment:
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   depends_on:
+  #     - web
+  #     - redis
+  #     - worker
