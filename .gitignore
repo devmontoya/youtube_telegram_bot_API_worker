@@ -93,3 +93,6 @@ geckodriver.log
 
 # Database
 *.db
+
+# Logs
+project/logs/celery.log
