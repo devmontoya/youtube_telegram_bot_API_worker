@@ -49,3 +49,9 @@ services:
       - web_api
       - redis
       - worker
+
+  selenium_grid:
+    image: selenium/standalone-firefox
+    ports:
+      - 4444:4444
+      - 7900:7900
