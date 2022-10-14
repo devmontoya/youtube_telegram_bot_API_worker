@@ -20,7 +20,7 @@ def pass_channel(channel: str):
 
 
 @app.get("/task_id_get_videos/{task_id}")
-def task_id_get_videos(task_id):
+def task_id_get_videos(task_id: str):
     task_result = AsyncResult(task_id)
     return JSONResponse(
         {"task_result": task_result.result, "task_status": task_result.status}
