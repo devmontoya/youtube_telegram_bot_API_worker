@@ -15,6 +15,8 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - redis
+    networks:
+      - API-Worker-network
 
   worker:
     build:
@@ -29,9 +31,13 @@ services:
     depends_on:
       - web_api
       - redis
+    networks:
+      - API-Worker-network
 
   redis:
     image: redis:7-alpine
+    networks:
+      - API-Worker-network
 
   flower_monitor:
     build:
@@ -49,9 +55,20 @@ services:
       - web_api
       - redis
       - worker
+    networks:
+      - API-Worker-network
 
   selenium_grid:
     image: selenium/standalone-firefox
     ports:
       - 4444:4444
       - 7900:7900
+    networks:
+      API-Worker-network:
+        ipv4_address: ${IP_SELENIUM:-172.20.0.6}
+
+networks:
+  API-Worker-network:
+    ipam:
+      config:
+        - subnet: ${IP_NETWORK_BASE:-172.20.0.0}/16

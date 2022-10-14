@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     celery_result_backend: str = Field(
         "redis://localhost:6379", env="CELERY_RESULT_BACKEND"
     )
+    ip_network_base: str = Field("172.20.0.0", env="IP_NETWORK_BASE")
+    ip_selenium: str = Field("172.20.0.6", env="IP_SELENIUM")
 
     class Config:
         env_file = ".env"

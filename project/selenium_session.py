@@ -1,5 +1,6 @@
 import time
 
+from config import settings
 from selenium import webdriver
 
 
@@ -11,7 +12,6 @@ class Borg:
 
 
 class CustomDriver(Borg):
-
     def __init__(self, name=None):
         super().__init__()
         if not hasattr(self, "_driver") or self._driver is None:
@@ -19,10 +19,12 @@ class CustomDriver(Borg):
             options = webdriver.FirefoxOptions()
             options.add_argument("--ignore-ssl-errors=yes")
             options.add_argument("--ignore-certificate-errors")
-            time.sleep(10)  # Todo: implement a way to check the status of the session
+            # Todo: implement a way to check the status of the session
+            time.sleep(10)
             try:
                 self._driver = webdriver.Remote(
-                    command_executor="http://172.18.0.3:4444/wd/hub", options=options
+                    command_executor=f"http://{settings.ip_selenium}:4444/wd/hub",
+                    options=options,
                 )
             except:
                 print("Error while the driver is starting")
