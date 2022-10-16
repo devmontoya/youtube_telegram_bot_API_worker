@@ -16,3 +16,7 @@ def fetch_html(channel: str, custom_driver) -> bytes:
     )
 
     return driver.page_source.encode("utf-8").strip()
+
+
+class NoVideosFound(Exception):
+    pass

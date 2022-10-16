@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "youtube_telegram_bot_celery_docker"
+name = "youtube_telegram_worker_celery_docker"
 version = "0.1.0"
 description = ""
 authors = ["Daniel Montoya <da03@protonmail.com>"]
@@ -20,6 +20,7 @@ bs4 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
+pytest-mock = "^3.10.0"
 pre-commit = "^2.20.0"
 
 [build-system]

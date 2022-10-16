@@ -18,6 +18,6 @@ WORKDIR /home/project
 
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install
+RUN poetry install --without dev
 
 COPY . .
