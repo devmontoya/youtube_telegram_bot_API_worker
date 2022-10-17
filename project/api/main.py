@@ -34,10 +34,11 @@ def task_id_get_videos(task_id: str):
 @app.get("/request_videos/{channel}", response_model=list[list[str]])
 def request_videos(channel: str):
     try:
-        task = get_videos.delay(channel).get()
+        task = get_videos.delay(channel)
+        videos = task.get()
     except NoVideosFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    return task
+    return videos
 
 
 @app.on_event("shutdown")

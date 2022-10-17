@@ -20,7 +20,7 @@ class CustomDriver(Borg):
             options.add_argument("--ignore-ssl-errors=yes")
             options.add_argument("--ignore-certificate-errors")
             # Todo: implement a way to check the status of the session
-            time.sleep(10)
+            time.sleep(5)
             try:
                 self._driver = webdriver.Remote(
                     command_executor=f"http://{settings.ip_selenium}:4444/wd/hub",
