@@ -1,5 +1,3 @@
-import time
-
 from celery.result import AsyncResult
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -24,7 +22,9 @@ def pass_channel(channel: str):
 def task_id_get_videos(task_id: str):
     task_result = AsyncResult(task_id)
     if isinstance(task_result.result, NoVideosFound):
-        raise HTTPException(status_code=404, detail=task_result.result.args[0])
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=task_result.result.args[0]
+        )
 
     return JSONResponse(
         {"task_result": task_result.result, "task_status": task_result.status}
