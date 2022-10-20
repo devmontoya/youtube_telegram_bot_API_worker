@@ -6,5 +6,9 @@ engine = create_engine("sqlite:///videosDB.db", echo=True)
 Session = sessionmaker(engine)
 
 
+def create_metadata():
+    Base.metadata.create_all(engine)
+
+
 class Base(DeclarativeBase):
     pass

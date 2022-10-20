@@ -12,9 +12,11 @@ class Borg:
 
 
 class CustomDriver(Borg):
-    def __init__(self, name=None):
+    def __init__(self, create_new_instance: bool = True):
         super().__init__()
-        if not hasattr(self, "_driver") or self._driver is None:
+        if (
+            not hasattr(self, "_driver") or self._driver is None
+        ) and create_new_instance:
             print("Driver starting")
             options = webdriver.FirefoxOptions()
             options.add_argument("--ignore-ssl-errors=yes")

@@ -31,5 +31,5 @@ def get_videos(channel: str) -> list[list[str]]:
 
 @celery.task(name="close_driver")
 def close_driver():
-    CustomDriver().close()
+    CustomDriver(create_new_instance=False).close()
     return True

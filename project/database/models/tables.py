@@ -1,4 +1,4 @@
-from base_connection import Base
+from database.base_connection import Base
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -7,6 +7,9 @@ class Client(Base):
     __tablename__ = "client"
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[str] = mapped_column(String(10))
+
+    def __repr__(self) -> str:
+        return f"Client(id={self.id!r}, chat_id={self.chat_id!r})"
 
 
 class Channel(Base):

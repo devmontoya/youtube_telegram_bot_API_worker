@@ -1,10 +1,16 @@
+from api.routes.api_front.base import api_front
 from celery.result import AsyncResult
+from database.base_connection import create_metadata
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from worker.utilities_worker import NoVideosFound
 from worker.worker import close_driver, get_videos
 
+create_metadata()
+
 app = FastAPI()
+
+app.include_router(api_front, prefix="/api_front")
 
 
 @app.get("/healthcheck")
@@ -29,16 +35,6 @@ def task_id_get_videos(task_id: str):
     return JSONResponse(
         {"task_result": task_result.result, "task_status": task_result.status}
     )
-
-
-@app.get("/request_videos/{channel}", response_model=list[list[str]])
-def request_videos(channel: str):
-    try:
-        task = get_videos.delay(channel)
-        videos = task.get()
-    except NoVideosFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    return videos
 
 
 @app.on_event("shutdown")
