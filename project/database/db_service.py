@@ -75,14 +75,46 @@ class VideoDb(DbService):
     particular_model: Base = Video
 
     @classmethod
-    def add_new_videos(cls, session, list_videos: list[list[str]], channel_id: int):
-        """Adds new videos, keeps only the 5 most recent ones"""
+    def add_new_channel_videos(
+        cls, session, list_videos: list[list[str]], channel_id: int
+    ) -> list[Video]:
+        """Adds new videos of a completely new channel"""
         video_objects = [
             Video(title=video[0], url=video[1], channel_id=channel_id)
             for video in list_videos
         ]
+        video_objects = video_objects[::-1]  # Reversed order
         session.add_all(video_objects)
         return video_objects
+
+    @classmethod
+    def add_new_videos(
+        cls, session, list_new_videos: list[list[str]], channel_id: int
+    ) -> list[Video]:
+        """Adds new videos, keeps only the 5 most recent ones"""
+        list_new_videos = list_new_videos[::-1]  # Reversed order
+
+        list_new_video_objects = [
+            Video(title=video[0], url=video[1], channel_id=channel_id)
+            for video in list_new_videos
+        ]
+
+        list_previous_videos = ChannelDb.get_element_by_id(session, channel_id).videos
+
+        next_videos_to_add = []
+
+        for video in list_new_video_objects:
+            if not (video in list_previous_videos):
+                next_videos_to_add.append(video)
+
+        session.add_all(next_videos_to_add)
+        print(next_videos_to_add)
+        session.flush()
+        for video in list_previous_videos:
+            if not (video in list_new_video_objects):
+                session.delete(video)
+
+        return list_new_video_objects
 
 
 class ClientChannelDb(DbService):

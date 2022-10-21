@@ -21,8 +21,9 @@ async def get_client_id(chat_id: str):
         return id_client.id
 
 
-@api_front.post("/new_client_channel/")
-async def new_client_channel(request: NewClientChannelRequest):
+@api_front.post("/new_client_channel/", response_model=list[list[str]])
+async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]]:
+    """Endpoint for a potencial new channel and client"""
     with Session() as session:
         client = ClientDb.get_element_by_id(session, request.client_id)
         if client is None:
@@ -39,21 +40,36 @@ async def new_client_channel(request: NewClientChannelRequest):
             channel_id = ChannelDb.get_element_with_filter(
                 session, Filter(column="name", value=channel_name)
             ).id
-            list_videos = VideoDb.add_new_videos(session, list_videos_list, channel_id)
+            list_videos = VideoDb.add_new_channel_videos(
+                session, list_videos_list, channel_id
+            )
         else:
             list_videos = ChannelDb.get_element_with_filter(
                 session, Filter(column="name", value=channel_name)
             ).videos
         session.commit()
-        list_videos = [[video.title, video.url] for video in list_videos]
-    return list_videos
+    return [[video.title, video.url] for video in list_videos]
 
 
 @api_front.get("/request_videos/{channel}", response_model=list[list[str]])
-def request_videos(channel: str):
+def request_videos(channel: str) -> list[list[str]]:
     try:
         task = get_videos.delay(channel)
         videos = task.get()
+    except NoVideosFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    return videos
+
+
+@api_front.get("/update_videos/{channel_id}", response_model=list[list[str]])
+def update_videos(channel_id: int) -> list[list[str]]:
+    try:
+        with Session() as session:
+            channel_name = ChannelDb.get_element_by_id(session, channel_id).name
+            task = get_videos.delay(channel_name)
+            videos = task.get()
+            VideoDb.add_new_videos(session, videos, channel_id)
+            session.commit()
     except NoVideosFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return videos

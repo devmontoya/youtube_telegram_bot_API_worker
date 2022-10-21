@@ -46,3 +46,10 @@ class Video(Base):
 
     def __repr__(self) -> str:
         return f"Video(id={self.id!r}, title={self.title!r}, channel_id={self.channel_id!r})"
+
+    def __eq__(self, other) -> bool:
+        return (
+            (self.title == other.title)
+            and (self.url == other.url)
+            and (self.channel_id == other.channel_id)
+        )
