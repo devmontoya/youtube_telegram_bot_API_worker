@@ -2,8 +2,13 @@ from pydantic import BaseModel, Field
 
 
 class NewClientChannelRequest(BaseModel):
-    chat_id: str
-    url: str = Field(..., max_length=60)
+    client_id: int = Field(default=1)
+    url: str = Field(default="www.youtube.com/c/bbcmundo", max_length=60)
+
+
+class channel_from_url(BaseModel):
+    name: str
+    format: int
 
 
 class Filter(BaseModel):

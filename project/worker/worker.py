@@ -24,9 +24,8 @@ def get_videos(channel: str) -> list[list[str]]:
     if len(common_tag) > 5:
         common_tag = common_tag[:5]
 
-    titles = [element.get("title") for element in common_tag]
-    urls = [element.get("href") for element in common_tag]
-    return [titles, urls]
+    videos = [[element.get("title"), element.get("href")] for element in common_tag]
+    return videos
 
 
 @celery.task(name="close_driver")
