@@ -27,8 +27,9 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
     with Session() as session:
         client = ClientDb.get_element_by_id(session, request.client_id)
         if client is None:
-            # new_client = Client(chat_id="414432")
-            ClientDb.add_new_element(session, new_client)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Client id no found"
+            )
         channel_name = extract_channel(request.url).name
         channel = ChannelDb.get_element_with_filter(
             session, Filter(column="name", value=channel_name)
@@ -47,8 +48,9 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
             list_videos = ChannelDb.get_element_with_filter(
                 session, Filter(column="name", value=channel_name)
             ).videos
+        result_list = [[video.title, video.url] for video in list_videos]
         session.commit()
-    return [[video.title, video.url] for video in list_videos]
+    return result_list
 
 
 @api_front.get("/request_videos/{channel}", response_model=list[list[str]])
