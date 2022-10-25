@@ -2,7 +2,7 @@ from api.schemas.requests import Filter, NewClientChannelRequest
 from api.url_parser.parser import extract_channel
 from database.base_connection import Session
 from database.db_service import ChannelDb, ClientDb, VideoDb
-from database.models.tables import *
+from database.models.tables import Channel, Client, ClientChannel, Video
 from fastapi import APIRouter, HTTPException, status
 from worker.utilities_worker import NoVideosFound
 from worker.worker import get_videos
@@ -38,9 +38,8 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
             list_videos_list = request_videos(channel_name)
             new_channel = Channel(name=channel_name, url_name=channel_name, format=0)
             ChannelDb.add_new_element(session, new_channel)
-            channel_id = ChannelDb.get_element_with_filter(
-                session, Filter(column="name", value=channel_name)
-            ).id
+            session.flush()
+            channel_id = new_channel.id
             list_videos = VideoDb.add_new_channel_videos(
                 session, list_videos_list, channel_id
             )
@@ -65,13 +64,26 @@ def request_videos(channel: str) -> list[list[str]]:
 
 @api_front.get("/update_videos/{channel_id}", response_model=list[list[str]])
 def update_videos(channel_id: int) -> list[list[str]]:
+    videos = []
     try:
         with Session() as session:
             channel_name = ChannelDb.get_element_by_id(session, channel_id).name
             task = get_videos.delay(channel_name)
             videos = task.get()
+            print(videos)
             VideoDb.add_new_videos(session, videos, channel_id)
             session.commit()
     except NoVideosFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return videos
+
+
+@api_front.get("/tests_db/{chat_id}", response_model=int)
+def tests_db(chat_id: str) -> int:
+    with Session() as session:
+        new_client = Client(chat_id=chat_id)
+        ClientDb.add_new_element(session, new_client)
+        session.flush()
+        client_id = new_client.id
+        session.commit()
+    return client_id
