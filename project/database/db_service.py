@@ -108,7 +108,6 @@ class VideoDb(DbService):
                 next_videos_to_add.append(video)
 
         session.add_all(next_videos_to_add)
-        print(next_videos_to_add)
         session.flush()
         for video in list_previous_videos:
             if not (video in list_new_video_objects):

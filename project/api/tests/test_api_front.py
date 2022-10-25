@@ -21,13 +21,16 @@ def test_request_videos_correct_result(mocker, expected_list_videos):
 
 
 def test_update_video_five_existing_videos_add_one(mocker, session_fixture):
-    prepare_five_videos(session_fixture)
-    new_video = [["video_6", "url_6"]]
+    previous_videos = prepare_five_videos(session_fixture)
+    new_video = previous_videos[1:] + ["video_6", "url_6"]
+    channel_object = mocker.MagicMock()
+    channel_object.get.return_value = new_video
     mocker.patch(
-        "api.routes.api_front.base.ChannelDb.get_element_by_id", return_value=1
+        "api.routes.api_front.base.ChannelDb.get_element_by_id",
+        return_value=channel_object,
     )
     object = mocker.MagicMock()
-    object.return_value.get.return_value = new_video
+    object.get.return_value = new_video
     mocker.patch("api.routes.api_front.base.get_videos.delay", return_value=object)
     Session = mocker.MagicMock()
     Session.return_value.__enter__.return_value = session_fixture
@@ -38,13 +41,13 @@ def test_update_video_five_existing_videos_add_one(mocker, session_fixture):
     assert response.json() == new_video
 
 
-def test_tests_db(mocker, session_fixture):
-    Session = mocker.MagicMock()
-    Session.return_value.__enter__.return_value = session_fixture
-    Session.return_value.__exit__.return_value = True
-    mocker.patch("api.routes.api_front.base.Session", return_value=Session())
-    response = client.get("/api_front/tests_db/5687")
-    assert response.status_code == status.HTTP_200_OK
+# def test_tests_db(mocker, session_fixture):
+#     Session = mocker.MagicMock()
+#     Session.return_value.__enter__.return_value = session_fixture
+#     Session.return_value.__exit__.return_value = True
+#     mocker.patch("api.routes.api_front.base.Session", return_value=Session())
+#     response = client.get("/api_front/tests_db/5687")
+#     assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.fixture()
@@ -56,11 +59,14 @@ def session_fixture(mocker):
     Session = sessionmaker(engine, autocommit=False, autoflush=False)
     session = Session()
     yield session
-    session.rollback()
+    # session.rollback()
 
 
 def prepare_five_videos(session):
-    videos = [
-        Video(title=f"video_{i}", url=f"url_{i}", channel_id=1) for i in range(1, 6)
+    videos = [[f"video_{i}", f"url_{i}"] for i in range(1, 6)]
+    video_objects = [
+        Video(title=video[0], url=video[1], channel_id=1) for video in videos
     ]
-    session.add_all(videos)
+    session.add_all(video_objects)
+    session.flush()
+    return videos

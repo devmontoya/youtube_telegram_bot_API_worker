@@ -64,7 +64,6 @@ def request_videos(channel: str) -> list[list[str]]:
 
 @api_front.get("/update_videos/{channel_id}", response_model=list[list[str]])
 def update_videos(channel_id: int) -> list[list[str]]:
-    videos = []
     try:
         with Session() as session:
             channel_name = ChannelDb.get_element_by_id(session, channel_id).name
