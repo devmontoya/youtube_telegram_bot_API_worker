@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     )
     ip_network_base: str = Field("172.20.0.0", env="IP_NETWORK_BASE")
     ip_selenium: str = Field("172.20.0.6", env="IP_SELENIUM")
+    using_selenium: bool = Field(False, env="USING_SELENIUM")
 
     class Config:
         env_file = ".env"

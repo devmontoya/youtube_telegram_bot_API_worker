@@ -1,5 +1,6 @@
 from api.routes.api_front.base import api_front
 from celery.result import AsyncResult
+from config import settings
 from database.base_connection import create_metadata
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -40,5 +41,7 @@ def task_id_get_videos(task_id: str):
 @app.on_event("shutdown")
 @app.get("/shutdown")
 def shutdown_selenium_session():
-    close_driver.delay().get()
-    return True
+    """this function is only executed if docker-compose is being used"""
+    if settings.using_selenium:
+        close_driver.delay().get()
+        return True
