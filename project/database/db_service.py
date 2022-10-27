@@ -94,11 +94,7 @@ class VideoDb(DbService):
         """Adds new videos, keeps only the 5 most recent ones"""
         list_new_videos = list_new_videos[::-1]  # Reversed order
 
-        list_new_video_objects = [
-            Video(title=video[0], url=video[1], channel_id=channel_id)
-            for video in list_new_videos
-        ]
-
+        list_new_video_objects = Video.from_array(list_new_videos, 1)
         list_previous_videos = ChannelDb.get_element_by_id(session, channel_id).videos
 
         next_videos_to_add = []

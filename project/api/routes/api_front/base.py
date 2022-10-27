@@ -75,14 +75,3 @@ def update_videos(channel_id: int) -> list[list[str]]:
     except NoVideosFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return videos
-
-
-@api_front.get("/tests_db/{chat_id}", response_model=int)
-def tests_db(chat_id: str) -> int:
-    with Session() as session:
-        new_client = Client(chat_id=chat_id)
-        ClientDb.add_new_element(session, new_client)
-        session.flush()
-        client_id = new_client.id
-        session.commit()
-    return client_id

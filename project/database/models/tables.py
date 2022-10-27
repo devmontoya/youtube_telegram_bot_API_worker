@@ -47,6 +47,13 @@ class Video(Base):
     def __repr__(self) -> str:
         return f"Video(id={self.id!r}, title={self.title!r}, channel_id={self.channel_id!r})"
 
+    @staticmethod
+    def from_array(array: list[list[str]], channel_id: int):
+        return [
+            Video(title=video[0], url=video[1], channel_id=channel_id)
+            for video in array
+        ]
+
     def __eq__(self, other) -> bool:
         return (
             (self.title == other.title)

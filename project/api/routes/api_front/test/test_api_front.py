@@ -1,12 +1,13 @@
 import pytest
 from api.main import app
-from api.routes.api_front.base import api_front
-from api.routes.api_front.test.tables_testing import Video
+from api.routes.api_front.test.tables_testing import Channel, Video
+from database.db_service import ChannelDb, VideoDb
 from fastapi import status
 from fastapi.testclient import TestClient
 from fixtures_test.conftest import expected_list_videos
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 from worker.utilities_worker import NoVideosFound
 
 client = TestClient(app)
@@ -32,45 +33,42 @@ def test_request_videos_raise_NoVideosFound_Exception(mocker):
 
 def test_update_video_five_existing_videos_add_one(mocker, session_fixture):
     previous_videos = prepare_five_videos(session_fixture)
-    new_video = previous_videos[1:] + ["video_6", "url_6"]
-    channel_object = mocker.MagicMock()
-    channel_object.get.return_value = new_video
-    mocker.patch(
-        "api.routes.api_front.base.ChannelDb.get_element_by_id",
-        return_value=channel_object,
+    new_videos = previous_videos[1:] + [["video_6", "url_6"]]
+
+    ChannelDb.add_new_element(
+        session_fixture, Channel(name="channel_1", url_name="channel_1", format=0)
     )
-    object = mocker.MagicMock()
-    object.get.return_value = new_video
-    mocker.patch("api.routes.api_front.base.get_videos.delay", return_value=object)
-    Session = mocker.MagicMock()
-    Session.return_value.__enter__.return_value = session_fixture
-    Session.return_value.__exit__.return_value = True
-    mocker.patch("api.routes.api_front.base.Session", return_value=Session())
+
+    channel_object = mocker.patch("api.routes.api_front.base.ChannelDb")()
+    channel_object.get_element_by_id.return_value = "channel_1"
+
+    task = mocker.MagicMock()
+    task.get.return_value = new_videos
+    mocker.patch("api.routes.api_front.base.get_videos.delay", return_value=task)
+
+    Session = mocker.patch("api.routes.api_front.base.Session")
+    Session.return_value = session_fixture
+
     response = client.get("api_front/update_videos/1")
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == new_video
-
-
-# def test_tests_db(mocker, session_fixture):
-#     Session = mocker.MagicMock()
-#     Session.return_value.__enter__.return_value = session_fixture
-#     Session.return_value.__exit__.return_value = True
-#     Session = mocker.patch("api.routes.api_front.base.Session")
-#     Session.return_value.__enter__.return_value = session_fixture
-#     response = client.get("api_front/tests_db/5687")
-#     assert response.status_code == status.HTTP_200_OK
+    assert response.json() == new_videos
+    assert VideoDb.get_all_elements(session_fixture) == Video.from_array(
+        new_videos, channel_id=1
+    )
 
 
 @pytest.fixture()
-def session_fixture(mocker):
+def session_fixture():
     from .tables_testing import Base
 
-    engine = create_engine("sqlite:///test_DB.db", echo=True)
+    engine = create_engine(
+        "sqlite://",
+        echo=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(engine)
-    Session = sessionmaker(engine)
-    session = Session()
-    yield session
-    session.close()
+    return Session(engine)
 
 
 def prepare_five_videos(session):
