@@ -62,6 +62,20 @@ class DbService:
         except NoResultFound:
             return None
 
+    @classmethod
+    def get_element_with_double_filter(
+        cls, session, filter_1: Filter, filter_2: Filter
+    ):
+        stmt = select(cls.particular_model).where(
+            (getattr(cls.particular_model, filter_1.column) == filter_1.value)
+            & (getattr(cls.particular_model, filter_2.column) == filter_2.value)
+        )
+        try:
+            element = session.scalars(stmt).one()
+            return element
+        except NoResultFound:
+            return None
+
 
 class ClientDb(DbService):
     particular_model: Base = Client
@@ -85,6 +99,7 @@ class VideoDb(DbService):
         ]
         video_objects = video_objects[::-1]  # Reversed order
         session.add_all(video_objects)
+        session.flush()
         return video_objects
 
     @classmethod

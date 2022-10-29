@@ -4,6 +4,7 @@ from api.schemas.requests import channel_from_url
 
 
 def extract_channel(text: str) -> channel_from_url:
+    """Extracts the name of a channel from a youtube url"""
     patterns = [
         r"(?:https:\/\/)?www\.youtube\.com(?:\/c)?\/(\w*)(?:(?:\/featured)|(?:\/videos))?",
         r"(?:https:\/\/)?www\.youtube\.com(?:\/channel)?\/([\w-]*)(?:(?:\/featured)|(?:\/videos))?",

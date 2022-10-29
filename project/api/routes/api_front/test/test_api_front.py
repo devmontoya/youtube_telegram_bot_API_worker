@@ -57,6 +57,14 @@ def test_update_video_five_existing_videos_add_one(mocker, session_fixture):
     )
 
 
+def test_add_new_client(mocker, session_fixture):
+    Session = mocker.patch("api.routes.api_front.base.Session")
+    Session.return_value = session_fixture
+    response = client.get("api_front/add_new_client/5678692")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == 1
+
+
 @pytest.fixture()
 def session_fixture():
     from .tables_testing import Base

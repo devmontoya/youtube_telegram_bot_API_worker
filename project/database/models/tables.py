@@ -19,6 +19,7 @@ class Channel(Base):
     name: Mapped[str] = mapped_column(String(30))
     url_name: Mapped[str] = mapped_column(String(30))
     format: Mapped[int]
+    last_id: Mapped[int | None]
     videos: Mapped[list["Video"]] = relationship()
     client_channels: Mapped[list["ClientChannel"]] = relationship()
 
