@@ -4,7 +4,7 @@ from worker.worker import get_videos
 
 
 def test_get_videos(mocker, expected_list_videos):
-    f = open("worker/tests/bbcmundo.html", "rb")
+    f = open("worker/tests/bbcmundo.bin", "rb")
     html = f.read()
     mocker.patch("worker.worker.CustomDriver", return_value=True)
     mocker.patch("worker.worker.fetch_html", return_value=html)
