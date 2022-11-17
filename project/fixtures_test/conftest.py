@@ -2,24 +2,24 @@ import pytest
 
 expected_list_videos_array = [
     [
-        "3 preguntas para entender la denuncia constitucional contra el presidente de Perú Pedro Castillo",
-        "/watch?v=ztNYKlx8jYg",
+        "4 datos que marcan la histórica misión Artemis de la NASA para volver a la Luna",
+        "/watch?v=bQzWu5-sQk8",
     ],
     [
-        "Los puntos calientes que dejó la desintegración de la Unión Soviética",
-        "/watch?v=P_aTv7zLHBc",
+        "A qué niveles llegan la pobreza, la desigualdad y la corrupción en Estados Unidos",
+        "/watch?v=on_pdEdz7HA",
     ],
     [
-        "Las imágenes de la devastación tras el deslave en Venezuela #shorts",
-        "/shorts/QAgsKZIm5ew",
+        'Qué quieren decir los términos "ultraderecha" y "ultraizquierda" (y cómo se usan en la actualidad)',
+        "/watch?v=Z0h4PCFvoo8",
     ],
     [
-        "Por qué los huracanes son tan frecuentes en México, Estados Unidos y el Caribe | BBC Mundo",
-        "/watch?v=YrK16AjSin0",
+        "Quién es Ron DeSantis, el gran ganador republicano en Florida que supone un desafío para Trump",
+        "/watch?v=DM-DEEa1SOs",
     ],
     [
-        "Los videos que muestran cómo se extendieron las protestas en Irán por la muerte de Mahsa Amini",
-        "/watch?v=djwFy6ZS00k",
+        "Cómo llegó al poder el régimen que gobierna la República Islámica de Irán | BBC Mundo",
+        "/watch?v=1wGiaxX2C-g",
     ],
 ]
 

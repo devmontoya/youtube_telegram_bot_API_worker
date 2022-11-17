@@ -11,8 +11,8 @@ def fetch_html(channel: str, custom_driver) -> bytes:
     driver.get(url)
     # Wait until the page has an element with id "video-title"
     # time.sleep(10) # A easier way but static
-    _ = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "video-title"))
+    _ = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.ID, "video-title-link"))
     )
 
     return driver.page_source.encode("utf-8").strip()

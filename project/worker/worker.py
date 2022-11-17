@@ -20,7 +20,7 @@ def get_videos(channel: str) -> list[list[str]]:
         raise NoVideosFound("This channel has no videos or does not exist")
 
     soup = BeautifulSoup(html, "html.parser")
-    common_tag = soup.findAll("a", id="video-title")
+    common_tag = soup.findAll("a", id="video-title-link")
     if len(common_tag) > 5:
         common_tag = common_tag[:5]
 
