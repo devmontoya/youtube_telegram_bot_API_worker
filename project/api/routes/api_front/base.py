@@ -4,6 +4,7 @@ from database.base_connection import Session
 from database.db_service import ChannelDb, ClientChannelDb, ClientDb, VideoDb
 from database.models.tables import Channel, Client, ClientChannel, Video
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import JSONResponse
 from worker.utilities_worker import NoVideosFound
 from worker.worker import get_videos
 
@@ -21,7 +22,7 @@ async def get_client_id(chat_id: str):
         return id_client.id
 
 
-@api_front.post("/new_client_channel/", response_model=list[list[str]])
+@api_front.post("/new_client_channel/")
 async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]]:
     """Endpoint for a potencial new channel and client"""
     with Session() as session:
@@ -37,13 +38,13 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
             session, Filter(column="name", value=channel_name)
         )
         if channel is None:
-            list_videos_list = request_videos(channel_name)
+            list_videos_from_selenium = request_videos(channel_name)
             new_channel = Channel(name=channel_name, url_name=channel_name, format=0)
             ChannelDb.add_new_element(session, new_channel)
             session.flush()
             channel_id = new_channel.id
             list_videos = VideoDb.add_new_channel_videos(
-                session, list_videos_list, channel_id
+                session, list_videos_from_selenium, channel_id
             )
             # Update the last video id in channel table
             session.flush()
@@ -55,12 +56,15 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
             )
             ClientChannelDb.add_new_element(session, new_client_channel)
             session.flush()
+            num_new_videos = len(list_videos)
         else:
             channel_id = channel.id
             list_videos = ChannelDb.get_element_with_filter(
                 session, Filter(column="name", value=channel_name)
             ).videos
             last_id_video = list_videos[-1].id
+
+            # Updating client-channel relationship
             client_channel_relationship = (
                 ClientChannelDb.get_element_with_double_filter(
                     session,
@@ -73,14 +77,18 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
                     client_id=client.id, channel_id=channel_id, last_id=last_id_video
                 )
                 ClientChannelDb.add_new_element(session, new_client_channel)
+                num_new_videos = len(list_videos)
             else:
                 """Compares the last video with the last one known for the user"""
-                num_new_videos = client_channel_relationship.last_id - channel.last_id
-                if num_new_videos < 0:
-                    list_videos = list_videos[num_new_videos:]
+                num_new_videos = channel.last_id - client_channel_relationship.last_id
+                if num_new_videos > 0:
+                    list_videos = list_videos[-num_new_videos:]
+                    client_channel_relationship.last_id = channel.last_id
+                else:
+                    list_videos = []
         result_list = [[video.title, video.url] for video in list_videos]
         session.commit()
-    return result_list
+    return {"num_new_videos": num_new_videos, "list_videos": result_list}
 
 
 @api_front.get("/request_videos/{channel}", response_model=list[list[str]])

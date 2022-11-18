@@ -48,7 +48,7 @@ def test_update_video_five_existing_videos_add_one(mocker, session_fixture):
 
     Session = mocker.patch("api.routes.api_front.base.Session")
     Session.return_value = session_fixture
-
+    Session.flush()
     response = client.get("api_front/update_videos/1")
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == new_videos
