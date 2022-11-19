@@ -1,3 +1,5 @@
+from typing import Type
+
 from api.schemas.requests import Filter
 from database.base_connection import Base
 from database.models.tables import Channel, Client, ClientChannel, Video
@@ -7,7 +9,7 @@ from sqlalchemy.exc import NoResultFound
 
 class DbService:
 
-    particular_model: Base
+    particular_model: Type[Base]
 
     @classmethod
     def get_all_elements(cls, session):
@@ -78,15 +80,15 @@ class DbService:
 
 
 class ClientDb(DbService):
-    particular_model: Base = Client
+    particular_model: Type[Base] = Client
 
 
 class ChannelDb(DbService):
-    particular_model: Base = Channel
+    particular_model: Type[Base] = Channel
 
 
 class VideoDb(DbService):
-    particular_model: Base = Video
+    particular_model: Type[Base] = Video
 
     @classmethod
     def add_new_channel_videos(
@@ -109,7 +111,8 @@ class VideoDb(DbService):
         """Adds new videos, keeps only the 5 most recent ones"""
         list_new_videos = list_new_videos[::-1]  # Reversed order
         list_new_video_objects = Video.from_array(list_new_videos, channel_id)
-        list_previous_videos = ChannelDb.get_element_by_id(session, channel_id).videos
+        channel = ChannelDb.get_element_by_id(session, channel_id)
+        list_previous_videos = channel.videos
 
         next_videos_to_add = []
 
@@ -122,9 +125,11 @@ class VideoDb(DbService):
         for video in list_previous_videos:
             if not (video in list_new_video_objects):
                 session.delete(video)
-
+        # Update channel's last_id
+        channel.last_id = list_new_video_objects[-1].id
+        session.flush()
         return list_new_video_objects
 
 
 class ClientChannelDb(DbService):
-    particular_model: Base = ClientChannel
+    particular_model: Type[Base] = ClientChannel

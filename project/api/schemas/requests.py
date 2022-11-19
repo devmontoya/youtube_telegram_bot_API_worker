@@ -6,6 +6,10 @@ class NewClientChannelRequest(BaseModel):
     url: str = Field(default="www.youtube.com/c/bbcmundo", max_length=60)
 
 
+class NewClient(BaseModel):
+    chat_id: str = Field(..., max_length=10)
+
+
 class channel_from_url(BaseModel):
     name: str
     format: int

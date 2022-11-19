@@ -1,4 +1,4 @@
-from api.schemas.requests import Filter, NewClientChannelRequest
+from api.schemas.requests import Filter, NewClient, NewClientChannelRequest
 from api.url_parser.parser import extract_channel
 from database.base_connection import Session
 from database.db_service import ChannelDb, ClientChannelDb, ClientDb, VideoDb
@@ -11,7 +11,7 @@ from worker.worker import get_videos
 api_front = APIRouter(tags=["Front (Bot, Web)"])
 
 
-@api_front.get("/get_client_id/{chat_id}")
+@api_front.get("/get_client_id/{chat_id}", response_model=dict)
 async def get_client_id(chat_id: str):
     with Session() as session:
         id_client = ClientDb.get_client_id_db(session, chat_id)
@@ -19,7 +19,7 @@ async def get_client_id(chat_id: str):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Chat_id no found"
             )
-        return id_client.id
+        return {"chat_id": chat_id, "client_id": id_client.id}
 
 
 @api_front.post("/new_client_channel/")
@@ -117,12 +117,12 @@ def update_videos(channel_id: int) -> list[list[str]]:
     return videos
 
 
-@api_front.get("/add_new_client/{chat_id}", response_model=int)
-def add_new_client(chat_id: str) -> int:
+@api_front.post("/add_new_client/", response_model=dict)
+def add_new_client(new_client_request: NewClient) -> int:
     with Session() as session:
-        new_client = Client(chat_id=chat_id)
+        new_client = Client(chat_id=new_client_request.chat_id)
         ClientDb.add_new_element(session, new_client)
         session.flush()
         client_id = new_client.id
         session.commit()
-    return client_id
+    return {"chat_id": new_client_request.chat_id, "client_id": client_id}
