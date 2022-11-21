@@ -2,11 +2,12 @@ from api.schemas.requests import Filter, NewClient, NewClientChannelRequest
 from api.url_parser.parser import extract_channel
 from database.base_connection import Session
 from database.db_service import ChannelDb, ClientChannelDb, ClientDb, VideoDb
-from database.models.tables import Channel, Client, ClientChannel, Video
+from database.models.tables import Channel, Client, ClientChannel
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import JSONResponse
 from worker.utilities_worker import NoVideosFound
 from worker.worker import get_videos
+
+from .helper_functions import get_new_channels_videos_for_client
 
 api_front = APIRouter(tags=["Front (Bot, Web)"])
 
@@ -22,8 +23,28 @@ async def get_client_id(chat_id: str):
         return {"chat_id": chat_id, "client_id": id_client.id}
 
 
+@api_front.get("/get_clients_channel_list/{client_id}", response_model=dict)
+async def get_clients_channel_list(client_id: int):
+    with Session() as session:
+        client = ClientDb.get_element_by_id(session, client_id)
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="client id no found"
+            )
+        client_channel = client.channels
+        channel_list = [channel_rela.channel for channel_rela in client_channel]
+        channel_list = [
+            {
+                "channel_name": channel.name,
+                "channel_url": f"www.youtube.com/c/{channel.url_name}",
+            }
+            for channel in channel_list
+        ]
+        return {"client_id": client_id, "channel_list": channel_list}
+
+
 @api_front.post("/new_client_channel/")
-async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]]:
+async def new_client_channel(request: NewClientChannelRequest) -> dict:
     """Endpoint for a potencial new channel and client"""
     with Session() as session:
         client = ClientDb.get_element_by_id(session, request.client_id)
@@ -58,34 +79,9 @@ async def new_client_channel(request: NewClientChannelRequest) -> list[list[str]
             session.flush()
             num_new_videos = len(list_videos)
         else:
-            channel_id = channel.id
-            list_videos = ChannelDb.get_element_with_filter(
-                session, Filter(column="name", value=channel_name)
-            ).videos
-            last_id_video = list_videos[-1].id
-
-            # Updating client-channel relationship
-            client_channel_relationship = (
-                ClientChannelDb.get_element_with_double_filter(
-                    session,
-                    Filter(column="client_id", value=client.id),
-                    Filter(column="channel_id", value=channel_id),
-                )
+            num_new_videos, list_videos = get_new_channels_videos_for_client(
+                session, client, channel
             )
-            if client_channel_relationship is None:
-                new_client_channel = ClientChannel(
-                    client_id=client.id, channel_id=channel_id, last_id=last_id_video
-                )
-                ClientChannelDb.add_new_element(session, new_client_channel)
-                num_new_videos = len(list_videos)
-            else:
-                """Compares the last video with the last one known for the user"""
-                num_new_videos = channel.last_id - client_channel_relationship.last_id
-                if num_new_videos > 0:
-                    list_videos = list_videos[-num_new_videos:]
-                    client_channel_relationship.last_id = channel.last_id
-                else:
-                    list_videos = []
         result_list = [[video.title, video.url] for video in list_videos]
         session.commit()
     return {"num_new_videos": num_new_videos, "list_videos": result_list}
@@ -118,7 +114,7 @@ def update_videos(channel_id: int) -> list[list[str]]:
 
 
 @api_front.post("/add_new_client/", response_model=dict)
-def add_new_client(new_client_request: NewClient) -> int:
+def add_new_client(new_client_request: NewClient) -> dict:
     with Session() as session:
         new_client = Client(chat_id=new_client_request.chat_id)
         ClientDb.add_new_element(session, new_client)
@@ -126,3 +122,29 @@ def add_new_client(new_client_request: NewClient) -> int:
         client_id = new_client.id
         session.commit()
     return {"chat_id": new_client_request.chat_id, "client_id": client_id}
+
+
+@api_front.get("/get_new_videos_for_client/{client_id}")
+def get_new_videos_for_client(client_id: int):
+    """Get all new videos from all channels for a client"""
+    with Session() as session:
+        client = ClientDb.get_element_by_id(session, client_id)
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="client no found"
+            )
+
+        client_channel = client.channels
+        channels = [channel_rela.channel for channel_rela in client_channel]
+
+        list_new_videos_channels = []
+        for channel in channels:
+            _, list_videos = get_new_channels_videos_for_client(
+                session, client, channel
+            )
+            result_list = [[video.title, video.url] for video in list_videos]
+            list_new_videos_channels.append(
+                {"channel_name": channel.name, "list_new_videos": result_list}
+            )
+        session.commit()
+    return list_new_videos_channels

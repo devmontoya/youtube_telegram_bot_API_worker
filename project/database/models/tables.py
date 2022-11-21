@@ -7,7 +7,7 @@ class Client(Base):
     __tablename__ = "client_table"
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[str] = mapped_column(String(10))
-    client_channels: Mapped[list["ClientChannel"]] = relationship()
+    channels: Mapped[list["ClientChannel"]] = relationship(back_populates="client")
 
     def __repr__(self) -> str:
         return f"Client(id={self.id!r}, chat_id={self.chat_id!r})"
@@ -21,7 +21,7 @@ class Channel(Base):
     format: Mapped[int]
     last_id: Mapped[int | None]
     videos: Mapped[list["Video"]] = relationship()
-    client_channels: Mapped[list["ClientChannel"]] = relationship()
+    clients: Mapped[list["ClientChannel"]] = relationship(back_populates="channel")
 
     def __repr__(self) -> str:
         return f"Channel(id={self.id!r}, name={self.name!r})"
@@ -33,6 +33,9 @@ class ClientChannel(Base):
     client_id: Mapped[int] = mapped_column(ForeignKey("client_table.id"))
     channel_id: Mapped[int] = mapped_column(ForeignKey("channel_table.id"))
     last_id: Mapped[int] = mapped_column(default=0)
+
+    client: Mapped["Client"] = relationship(back_populates="channels")
+    channel: Mapped["Channel"] = relationship(back_populates="clients")
 
     def __repr__(self) -> str:
         return f"ClientChannel(id={self.id!r}, client_id={self.client_id!r}, channel_id={self.channel_id!r}, last_id={self.client_id!r})"
