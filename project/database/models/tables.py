@@ -17,7 +17,7 @@ class Channel(Base):
     __tablename__ = "channel_table"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
-    url_name: Mapped[str] = mapped_column(String(30))
+    url_name: Mapped[str] = mapped_column(String(50))
     format: Mapped[int]
     last_id: Mapped[int | None]
     videos: Mapped[list["Video"]] = relationship()
@@ -44,8 +44,8 @@ class ClientChannel(Base):
 class Video(Base):
     __tablename__ = "video_table"
     id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(30))
-    url: Mapped[str] = mapped_column(String(30))
+    title: Mapped[str] = mapped_column(String(100))
+    url: Mapped[str] = mapped_column(String(50))
     channel_id: Mapped[int] = mapped_column(ForeignKey("channel_table.id"))
 
     def __repr__(self) -> str:
